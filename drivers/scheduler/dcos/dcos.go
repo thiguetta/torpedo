@@ -424,6 +424,17 @@ func (d *dcos) StartSchedOnNode(node node.Node) error {
 	return nil
 }
 
+
+func (d *dcos) CordonNode(node node.Node) error {
+	//TODO implement this method
+	return nil
+}
+
+func (d *dcos) UncordonNode(node node.Node) error {
+	//TODO implement this method
+	return nil
+}
+
 func init() {
 	d := &dcos{}
 	scheduler.Register(SchedName, d)

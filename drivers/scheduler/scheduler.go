@@ -95,6 +95,13 @@ type Driver interface {
 
 	// Start scheduler service on the given node
 	StartSchedOnNode(n node.Node) error
+
+	// CordonNode marks the node to stop receiving schedule request
+	CordonNode(n node.Node) error
+
+	// UncordonNode marks the node to start receiving schedule request
+	UncordonNode(n node.Node) error
+
 }
 
 var (

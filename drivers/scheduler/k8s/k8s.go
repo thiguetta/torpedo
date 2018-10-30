@@ -1461,6 +1461,14 @@ func (k *k8s) StartSchedOnNode(n node.Node) error {
 	return nil
 }
 
+func (k *k8s) CordonNode(node node.Node) error {
+	return k8s_ops.Instance().CordonNode(node.Name, defaultTimeout, defaultRetryInterval)
+}
+
+func (k *k8s) UncordonNode(node node.Node) error {
+	return k8s_ops.Instance().UnCordonNode(node.Name, defaultTimeout, defaultRetryInterval)
+}
+
 func insertLineBreak(note string) string {
 	return fmt.Sprintf("------------------------------\n%s\n------------------------------\n", note)
 }

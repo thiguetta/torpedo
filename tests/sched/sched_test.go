@@ -42,20 +42,30 @@ var _ = Describe("{StopScheduler}", func() {
 				})
 				randNode := rand.Intn(len(appNodes))
 				appNode := appNodes[randNode]
-				Step(fmt.Sprintf("stop scheduler service"), func() {
+				Step(fmt.Sprintf("stop scheduler service on node %s",  appNode.Name), func() {
 					err := Inst().S.StopSchedOnNode(appNode)
 					Expect(err).NotTo(HaveOccurred())
 					Step("wait for the service to stop and reschedule apps", func() {
 						time.Sleep(6 * time.Minute)
 					})
 
-					Step(fmt.Sprintf("check if apps are running"), func() {
-						ValidateContext(ctx)
+					Step(fmt.Sprintf("Cordon the node %s", appNode.Name), func() {
+						err := Inst().S.CordonNode(appNode)
+						Expect(err).NotTo(HaveOccurred())
 					})
 				})
 
-				Step(fmt.Sprintf("start scheduler service"), func() {
+				Step(fmt.Sprintf("start scheduler service on node %v", appNode.Name), func() {
 					err := Inst().S.StartSchedOnNode(appNode)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				Step(fmt.Sprintf("check if apps are running"), func() {
+					ValidateContext(ctx)
+				})
+
+				Step(fmt.Sprintf("Uncordon the node %s", appNode.Name), func() {
+					err := Inst().S.UncordonNode(appNode)
 					Expect(err).NotTo(HaveOccurred())
 				})
 			}
