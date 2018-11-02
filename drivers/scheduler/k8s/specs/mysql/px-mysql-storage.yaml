@@ -21,36 +21,36 @@ allowVolumeExpansion: true
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
-    name: px-mysql-sc-aggr
+  name: px-mysql-sc-aggr
 provisioner: kubernetes.io/portworx-volume
 parameters:
-   fs: "ext4"
-   block_size: "512b"
-   repl: "2"
-   aggregation_level: "2"
-   io_profile: "random"
-   priority_io: "high"
-   shared: "false"
-   snap_schedule: "periodic=60,5"
-   labels: "type=aggregated"
-   group: "mysql-data"
+  fs: "ext4"
+  block_size: "512b"
+  repl: "2"
+  aggregation_level: "2"
+  io_profile: "random"
+  priority_io: "high"
+  shared: "false"
+  snap_schedule: "periodic=60,5"
+  labels: "type=aggregated"
+  group: "mysql-data"
 allowVolumeExpansion: true
 ---
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
-    name: px-mysql-sc-seq
+  name: px-mysql-sc-seq
 provisioner: kubernetes.io/portworx-volume
 parameters:
-   fs: "ext4"
-   repl: "3"
-   aggregation_level: "1"
-   io_profile: "sequential"
-   priority_io: "high"
-   shared: "false"
-   snap_schedule: "daily=12:00,7"
-   labels: "type=replicated"
-   group: "mysql-data"
+  fs: "ext4"
+  repl: "3"
+  aggregation_level: "1"
+  io_profile: "sequential"
+  priority_io: "high"
+  shared: "false"
+  snap_schedule: "daily=12:00,7"
+  labels: "type=replicated"
+  group: "mysql-data"
 allowVolumeExpansion: true
 ---
 ##### Portworx persistent volume claim
@@ -62,11 +62,10 @@ metadata:
     px/secret-name: volume-secrets
     px/secret-namespace: "{{NAMESPACE}}"
     px/secret-key: mysql-secret
-    volume.beta.kubernetes.io/storage-class: px-mysql-sc
 spec:
   storageClassName: px-mysql-sc
   accessModes:
-    - ReadWriteOnce
+  - ReadWriteOnce
   resources:
     requests:
       storage: 2Gi
@@ -74,25 +73,23 @@ spec:
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-   name: mysql-data-seq
-   annotations:
-     volume.beta.kubernetes.io/storage-class: px-mysql-sc-seq
+  name: mysql-data-seq
 spec:
-   accessModes:
-     - ReadWriteOnce
-   resources:
-     requests:
-       storage: 2Gi
+  storageClassName: px-mysql-sc-seq
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-   name: mysql-data-aggr
-   annotations:
-     volume.beta.kubernetes.io/storage-class: px-mysql-sc-aggr
+  name: mysql-data-aggr
 spec:
-   accessModes:
-     - ReadWriteOnce
-   resources:
-     requests:
-       storage: 2Gi
+  storageClassName: px-mysql-sc-aggr
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi

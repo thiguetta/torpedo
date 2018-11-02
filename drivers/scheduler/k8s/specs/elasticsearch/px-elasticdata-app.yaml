@@ -49,7 +49,7 @@ spec:
           privileged: true
           capabilities:
             add:
-              - IPC_LOCK
+            - IPC_LOCK
         image: quay.io/pires/docker-elasticsearch-kubernetes:5.5.0
         imagePullPolicy: Always
         env:
@@ -81,10 +81,10 @@ spec:
   volumeClaimTemplates:
   - metadata:
       name: elasticdata-vol
-      annotations:
-        volume.beta.kubernetes.io/storage-class: px-elasticdata-sc
     spec:
-      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: px-elasticdata-sc
+      accessModes:
+      - ReadWriteOnce
       resources:
         requests:
           storage: 2Gi

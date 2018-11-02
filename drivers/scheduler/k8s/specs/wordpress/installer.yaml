@@ -22,9 +22,9 @@ spec:
       value: wordpress-mysql
     - name: WORDPRESS_DB_PASSWORD
       valueFrom:
-         secretKeyRef:
-           name: mysql-pass
-           key: password
+        secretKeyRef:
+          name: mysql-pass
+          key: password
     volumeMounts:
     - name: wordpress-persistent-storage
       mountPath: /wordpress

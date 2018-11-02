@@ -1,10 +1,10 @@
 apiVersion: v1
-kind: Pod 
+kind: Pod
 metadata:
- name: load-driver
- labels:
-   app: wordpress
-   tier: load-driver
+  name: load-driver
+  labels:
+    app: wordpress
+    tier: load-driver
 spec:
   initContainers:
   - image: appropriate/curl

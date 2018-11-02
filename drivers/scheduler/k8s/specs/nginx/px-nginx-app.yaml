@@ -7,9 +7,9 @@ spec:
     app: nginx
   type: NodePort
   ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
+  - protocol: TCP
+    port: 80
+    targetPort: 80
 ---
 apiVersion: apps/v1beta2
 kind: Deployment

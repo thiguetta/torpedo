@@ -6,12 +6,12 @@ metadata:
   annotations:
     px/snapshot-source-pvc: mysql-data
 spec:
-   storageClassName: px-mysql-sc
-   accessModes:
-     - ReadWriteOnce
-   resources:
-     requests:
-       storage: 2Gi
+  storageClassName: px-mysql-sc
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
 ---
 ##### Portworx Stork Snapshot
 apiVersion: volumesnapshot.external-storage.k8s.io/v1

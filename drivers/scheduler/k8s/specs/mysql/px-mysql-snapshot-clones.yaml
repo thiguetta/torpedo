@@ -2,29 +2,29 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-   name: ns.{{NAMESPACE}}-name.mysql-snap-clone
-   annotations:
+  name: ns.{{NAMESPACE}}-name.mysql-snap-clone
+  annotations:
     px/snapshot-source-pvc: ns.{{NAMESPACE}}-name.mysql-snapshot
 spec:
-   storageClassName: px-mysql-sc
-   accessModes:
-     - ReadWriteOnce
-   resources:
-     requests:
-       storage: 2Gi
+  storageClassName: px-mysql-sc
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
 ---
 ##### Portworx PVC clone from VolumeSnapshot using Stork
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-   name: mysql-snap-clone
-   annotations:
-     snapshot.alpha.kubernetes.io/snapshot: mysql-snapshot
-     torpedo/resize-supported: "false"
+  name: mysql-snap-clone
+  annotations:
+    snapshot.alpha.kubernetes.io/snapshot: mysql-snapshot
+    torpedo/resize-supported: "false"
 spec:
-   storageClassName: stork-snapshot-sc
-   accessModes:
-     - ReadWriteOnce
-   resources:
-     requests:
-       storage: 2Gi
+  storageClassName: stork-snapshot-sc
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
