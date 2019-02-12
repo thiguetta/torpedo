@@ -77,3 +77,19 @@ spec:
   resources:
     requests:
       storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    snapshot.alpha.kubernetes.io/snapshot: "snapshot-for-mysql-data-shared"
+  labels:
+    app: mysql
+  name: mysql-data-shared-clone
+spec:
+  accessModes:
+  - ReadWriteMany
+  storageClassName: stork-snapshot-sc
+  resources:
+    requests:
+      storage: 2Gi
