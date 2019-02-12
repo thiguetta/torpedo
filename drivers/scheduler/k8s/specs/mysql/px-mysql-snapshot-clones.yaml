@@ -28,3 +28,52 @@ spec:
    resources:
      requests:
        storage: 2Gi
+---
+#### Cloud snapshots
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    snapshot.alpha.kubernetes.io/snapshot: "snapshot-for-mysql-data"
+  labels:
+    app: mysql
+  name: mysql-data-clone
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: stork-snapshot-sc
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    snapshot.alpha.kubernetes.io/snapshot: "snapshot-for-mysql-data-seq"
+  labels:
+    app: mysql
+  name: mysql-data-seq-clone
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: stork-snapshot-sc
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    snapshot.alpha.kubernetes.io/snapshot: "snapshot-for-mysql-data-aggr"
+  labels:
+    app: mysql
+  name: mysql-data-aggr-clone
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: stork-snapshot-sc
+  resources:
+    requests:
+      storage: 2Gi
