@@ -35,8 +35,6 @@ kind: PersistentVolumeClaim
 metadata:
   annotations:
     snapshot.alpha.kubernetes.io/snapshot: "snapshot-for-mysql-data"
-  labels:
-    app: mysql
   name: mysql-data-clone
 spec:
   accessModes:
@@ -51,8 +49,6 @@ kind: PersistentVolumeClaim
 metadata:
   annotations:
     snapshot.alpha.kubernetes.io/snapshot: "snapshot-for-mysql-data-seq"
-  labels:
-    app: mysql
   name: mysql-data-seq-clone
 spec:
   accessModes:
@@ -67,8 +63,6 @@ kind: PersistentVolumeClaim
 metadata:
   annotations:
     snapshot.alpha.kubernetes.io/snapshot: "snapshot-for-mysql-data-aggr"
-  labels:
-    app: mysql
   name: mysql-data-aggr-clone
 spec:
   accessModes:
@@ -83,8 +77,6 @@ kind: PersistentVolumeClaim
 metadata:
   annotations:
     snapshot.alpha.kubernetes.io/snapshot: "snapshot-for-mysql-data-shared"
-  labels:
-    app: mysql
   name: mysql-data-shared-clone
 spec:
   accessModes:
