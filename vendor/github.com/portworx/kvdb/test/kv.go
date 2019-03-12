@@ -87,6 +87,32 @@ func Run(datastoreInit kvdb.DatastoreInit, t *testing.T, start StartKvdb, stop S
 	assert.NoError(t, err, "Unable to stop kvdb")
 }
 
+// RunBasic runs the basic test suite.
+func RunBasic(datastoreInit kvdb.DatastoreInit, t *testing.T, start StartKvdb, stop StopKvdb) {
+	err := start(true)
+	assert.NoError(t, err, "Unable to start kvdb")
+	// Wait for kvdb to start
+	time.Sleep(5 * time.Second)
+	kv, err := datastoreInit("pwx/test", nil, nil, fatalErrorCb())
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	create(kv, t)
+	cas(kv, t)
+	cad(kv, t)
+	get(kv, t)
+	getInterface(kv, t)
+	update(kv, t)
+	deleteKey(kv, t)
+	deleteTree(kv, t)
+	enumerate(kv, t)
+	keys(kv, t)
+	lockBasic(kv, t)
+	lock(kv, t)
+	err = stop()
+	assert.NoError(t, err, "Unable to stop kvdb")
+}
+
 // RunLock runs the lock test suite.
 func RunLock(datastoreInit kvdb.DatastoreInit, t *testing.T, start StartKvdb, stop StopKvdb) {
 	err := start(true)
@@ -358,10 +384,10 @@ func enumerate(kv kvdb.Kvdb, t *testing.T) {
 	assert.Equal(t, 0, len(errPairs), "Expected 0 pairs")
 
 	folderKey := prefix + "/folder/"
-	_, err = kv.Put(folderKey, []byte(""), 0)
+	_, err = kv.Put(folderKey, []byte("value"), 0)
 	assert.NoError(t, err, "Unexpected error on Put")
 	kvPairs, err := kv.Enumerate(folderKey)
-	assert.Equal(t, nil, err, "Unexpected error on Enumerate")
+	assert.NoError(t, err, "Unexpected error on Enumerate")
 	kv.DeleteTree(prefix)
 
 	for key, val := range keys {
@@ -609,7 +635,7 @@ func snapshot(kv kvdb.Kvdb, t *testing.T) {
 	go updateFn(count, newValue, inputData, inputDataVersion, true)
 	time.Sleep(20 * time.Millisecond)
 
-	snap, snapVersion, err := kv.Snapshot([]string{prefix, prefix2, prefix3})
+	snap, snapVersion, err := kv.Snapshot([]string{prefix, prefix2, prefix3}, true)
 	assert.NoError(t, err, "Unexpected error on Snapshot")
 	<-doneUpdate
 
@@ -804,7 +830,7 @@ func lockBetweenRestarts(kv kvdb.Kvdb, t *testing.T, start StartKvdb, stop StopK
 		fmt.Println("starting kvdb")
 		err = start(false)
 		assert.NoError(t, err, "Unable to start kvdb")
-		time.Sleep(30 * time.Second)
+		time.Sleep(40 * time.Second)
 
 		lockChan := make(chan int)
 		go func() {
@@ -1158,7 +1184,7 @@ func watchWithIndex(kv kvdb.Kvdb, t *testing.T) {
 }
 
 func cas(kv kvdb.Kvdb, t *testing.T) {
-	fmt.Println("\ncas")
+	fmt.Println("cas")
 
 	key := "foo/docker"
 	val := "great"
@@ -1197,7 +1223,7 @@ func cas(kv kvdb.Kvdb, t *testing.T) {
 }
 
 func cad(kv kvdb.Kvdb, t *testing.T) {
-	fmt.Println("\ncad")
+	fmt.Println("cad")
 
 	key := "foo/docker"
 	val := "great"

@@ -83,7 +83,8 @@ const (
 	pxSecretsNamespace              = "portworx"
 	defaultPXImage                  = "portworx/px-enterprise"
 	dockerPullerImage               = "portworx/docker-puller:latest"
-	pxNodeWiperImage                = "portworx/px-node-wiper:1.5.1"
+	defaultNodeWiperImage           = "portworx/px-node-wiper"
+	defaultNodeWiperTag             = "2.0.2.1"
 	pxdRestPort                     = 9001
 	pxServiceName                   = "portworx-service"
 	pxClusterRoleName               = "node-get-put-list-role"
@@ -145,6 +146,10 @@ type UpgradeOptions struct {
 type DeleteOptions struct {
 	// WipeCluster instructs if Portworx cluster metadata needs to be wiped off
 	WipeCluster bool
+	// WiperImage is the docker tag to use for the node wiper
+	WiperImage string
+	// WiperTag is the docker tag to use for the node wiper
+	WiperTag string
 }
 
 // Cluster an interface to manage a storage cluster
@@ -307,7 +312,7 @@ func (ops *pxClusterOps) Delete(c *apiv1beta1.Cluster, opts *DeleteOptions) erro
 		// cluster might have been started with incorrect kvdb information. So we won't be able to wipe that off.
 
 		// Wipe px from each node
-		err := ops.runPXNodeWiper(pwxHostPathRoot)
+		err := ops.runPXNodeWiper(pwxHostPathRoot, opts.WiperImage, opts.WiperTag)
 		if err != nil {
 			logrus.Warnf("Failed to wipe Portworx local node state. err: %v", err)
 		}
@@ -455,6 +460,12 @@ func (ops *pxClusterOps) upgradePX(newVersion string) error {
 				APIGroups: []string{""},
 				Resources: []string{"configmaps"},
 				Verbs:     []string{"get", "update", "list", "create"},
+			},
+			{
+				APIGroups:     []string{"extensions"},
+				Resources:     []string{"podsecuritypolicies"},
+				ResourceNames: []string{"privileged"},
+				Verbs:         []string{"use"},
 			},
 		},
 	}
@@ -963,14 +974,28 @@ func (ops *pxClusterOps) deleteAllPXComponents(clusterName string) error {
 		return err
 	}
 
+	err = ops.k8sOps.DeleteNamespace(pxSecretsNamespace)
+	if err != nil && !errors.IsNotFound(err) {
+		return err
+	}
+
 	return nil
 }
 
-func (ops *pxClusterOps) runPXNodeWiper(pwxHostPathRoot string) error {
+func (ops *pxClusterOps) runPXNodeWiper(pwxHostPathRoot, wiperImage, wiperTag string) error {
 	trueVar := true
 	labels := map[string]string{
 		"name": pxNodeWiperDaemonSetName,
 	}
+
+	if len(wiperImage) == 0 {
+		wiperImage = defaultNodeWiperImage
+	}
+
+	if len(wiperTag) == 0 {
+		wiperTag = defaultNodeWiperTag
+	}
+
 	args := []string{"-w"}
 	ds := &apps_api.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -990,7 +1015,7 @@ func (ops *pxClusterOps) runPXNodeWiper(pwxHostPathRoot string) error {
 					Containers: []corev1.Container{
 						{
 							Name:            pxNodeWiperDaemonSetName,
-							Image:           pxNodeWiperImage,
+							Image:           fmt.Sprintf("%s:%s", wiperImage, wiperTag),
 							ImagePullPolicy: corev1.PullAlways,
 							Args:            args,
 							SecurityContext: &corev1.SecurityContext{
