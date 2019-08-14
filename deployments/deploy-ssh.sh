@@ -227,6 +227,7 @@ spec:
   containers:
   - name: torpedo
     image: ${TORPEDO_IMG}
+    imagePullPolicy: Always
     command: [ "ginkgo" ]
     args: [ "--trace",
             "--timeout", "${TIMEOUT}",
@@ -236,6 +237,7 @@ spec:
             "$FOCUS_ARG",
             "$SKIP_ARG",
             "bin/asg.test",
+            "bin/autopilot-capacity.test",
             "bin/basic.test",
             "bin/reboot.test",
             "bin/upgrade.test",
