@@ -29,8 +29,9 @@ else
     FAIL_FAST="-keepGoing"
 fi
 
-if [ -z "$INSTALL_FLUSH_CACHE" ]; then
-    INSTALL_FLUSH_CACHE=false
+INSTALL_FLUSH_CACHE=""
+if [ -n "$FLUSH_CACHE" ]; then
+    INSTALL_FLUSH_CACHE="--install-flush-cache"
 fi
 
 SKIP_ARG=""
@@ -252,7 +253,7 @@ spec:
             "--driver-start-timeout", "$DRIVER_START_TIMEOUT",
             "--chaos-level", "$CHAOS_LEVEL",
             "--provisioner", "$PROVISIONER",
-            "--install-flush-cache", "$INSTALL_FLUSH_CACHE",
+            "$INSTALL_FLUSH_CACHE",
             "$UPGRADE_VERSION_ARG",
             "$UPGRADE_BASE_VERSION_ARG" ]
     tty: true
