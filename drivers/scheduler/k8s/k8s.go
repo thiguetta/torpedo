@@ -14,6 +14,7 @@ import (
 	"time"
 
 	snap_v1 "github.com/kubernetes-incubator/external-storage/snapshot/pkg/apis/crd/v1"
+	ap_api "github.com/libopenstorage/autopilot/pkg/apis/autopilot/v1alpha1"
 	stork_api "github.com/libopenstorage/stork/pkg/apis/stork/v1alpha1"
 	k8s_ops "github.com/portworx/sched-ops/k8s"
 	"github.com/portworx/sched-ops/task"
@@ -233,6 +234,10 @@ func decodeSpec(specContents []byte) (runtime.Object, error) {
 			return nil, err
 		}
 
+		if err := ap_api.AddToScheme(scheme); err != nil {
+			return nil, err
+		}
+
 		codecs := serializer.NewCodecFactory(scheme)
 		obj, _, err = codecs.UniversalDeserializer().Decode([]byte(specContents), nil, nil)
 		if err != nil {
@@ -284,6 +289,8 @@ func validateSpec(in interface{}) (interface{}, error) {
 	} else if specObj, ok := in.(*stork_api.ApplicationClone); ok {
 		return specObj, nil
 	} else if specObj, ok := in.(*stork_api.VolumeSnapshotRestore); ok {
+		return specObj, nil
+	} else if specObj, ok := in.(*ap_api.AutopilotRule); ok {
 		return specObj, nil
 	}
 
@@ -804,6 +811,23 @@ func (k *K8s) createCoreObject(spec interface{}, ns *v1.Namespace, app *spec.App
 
 		logrus.Infof("[%v] Created Config Map: %v", app.Key, configMap.Name)
 		return configMap, nil
+	} else if obj, ok := spec.(*ap_api.AutopilotRule); ok {
+		apRule, err := k8sOps.CreateAutopilotRule(obj)
+		if errors.IsAlreadyExists(err) {
+			if apRule, err := k8sOps.GetAutopilotRule(obj.Name); err == nil {
+				logrus.Infof("[%v] Found existing AutopilotRule: %v", app.Key, apRule.Name)
+				return apRule, nil
+			}
+		}
+		if err != nil {
+			return nil, &scheduler.ErrFailedToScheduleApp{
+				App:   app,
+				Cause: fmt.Sprintf("Failed to create AutopilotRule: %v. Err: %v", obj.Name, err),
+			}
+		}
+
+		logrus.Infof("[%v] Created AutopilotRule: %v", app.Key, apRule.Name)
+		return apRule, nil
 	}
 
 	return nil, nil
@@ -894,6 +918,16 @@ func (k *K8s) destroyCoreObject(spec interface{}, opts map[string]bool, app *spe
 		}
 
 		logrus.Infof("[%v] Destroyed Config Map: %v", app.Key, obj.Name)
+	} else if obj, ok := spec.(*ap_api.AutopilotRule); ok {
+		err := k8sOps.DeleteAutopilotRule(obj.Name)
+		if err != nil {
+			return pods, &scheduler.ErrFailedToDestroyApp{
+				App:   app,
+				Cause: fmt.Sprintf("Failed to destroy AutopilotRule: %v. Err: %v", obj.Name, err),
+			}
+		}
+
+		logrus.Infof("[%v] Destroyed AutopilotRule: %v", app.Key, obj.Name)
 	}
 
 	return pods, nil
@@ -1045,6 +1079,15 @@ func (k *K8s) WaitForRunning(ctx *scheduler.Context, timeout, retryInterval time
 				}
 			}
 			logrus.Infof("[%v] Validated VolumeSnapshotRestore: %v", ctx.App.Key, obj.Metadata.Name)
+		} else if obj, ok := spec.(*ap_api.AutopilotRule); ok {
+			if _, err := k8sOps.GetAutopilotRule(obj.Name); err != nil {
+				return &scheduler.ErrFailedToValidateCustomSpec{
+					Name:  obj.Name,
+					Cause: fmt.Sprintf("Failed to validate AutopilotRule: %v. Err: %v", obj.Name, err),
+					Type:  obj,
+				}
+			}
+			logrus.Infof("[%v] Validated AutopilotRule: %v", ctx.App.Key, obj.Name)
 		}
 	}
 
