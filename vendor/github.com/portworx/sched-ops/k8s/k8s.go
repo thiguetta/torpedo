@@ -12,6 +12,8 @@ import (
 
 	snap_v1 "github.com/kubernetes-incubator/external-storage/snapshot/pkg/apis/crd/v1"
 	snap_client "github.com/kubernetes-incubator/external-storage/snapshot/pkg/client"
+	aut_v1alpaha1 "github.com/libopenstorage/autopilot/pkg/apis/autopilot/v1alpha1"
+	autopilotclientset "github.com/libopenstorage/autopilot/pkg/client/clientset/versioned"
 	"github.com/libopenstorage/stork/pkg/apis/stork/v1alpha1"
 	storkclientset "github.com/libopenstorage/stork/pkg/client/clientset/versioned"
 	ocp_appsv1_api "github.com/openshift/api/apps/v1"
@@ -89,6 +91,7 @@ type Ops interface {
 	ClusterPairOps
 	MigrationOps
 	ClusterDomainsOps
+	AutopilotRuleOps
 	ObjectOps
 	SchedulePolicyOps
 	VolumePlacementStrategyOps
@@ -106,6 +109,7 @@ type Ops interface {
 		dynamicInterface dynamic.Interface,
 		ocpClient ocp_clientset.Interface,
 		ocpSecurityClient ocp_security_clientset.Interface,
+		autopilotClient autopilotclientset.Interface,
 	)
 	SecurityContextConstraints
 
@@ -134,7 +138,7 @@ type EventOps interface {
 // NamespaceOps is an interface to perform namespace operations
 type NamespaceOps interface {
 	// ListNamespaces returns all the namespaces
-	ListNamespaces() (*v1.NamespaceList, error)
+	ListNamespaces(labelSelector map[string]string) (*v1.NamespaceList, error)
 	// GetNamespace returns a namespace object for given name
 	GetNamespace(name string) (*v1.Namespace, error)
 	// CreateNamespace creates a namespace with given name and metadata
@@ -562,9 +566,11 @@ type CRDOps interface {
 	// This API will be deprecated soon. Use RegisterCRD instead
 	CreateCRD(resource CustomResource) error
 	// RegisterCRD creates the given custom resource
-	RegisterCRD(crdDefinition *apiextensionsv1beta1.CustomResourceDefinition) error
+	RegisterCRD(crd *apiextensionsv1beta1.CustomResourceDefinition) error
 	// ValidateCRD checks if the given CRD is registered
 	ValidateCRD(resource CustomResource, timeout, retryInterval time.Duration) error
+	// DeleteCRD deletes the CRD for the given complete name (plural.group)
+	DeleteCRD(fullName string) error
 }
 
 // ClusterPairOps is an interface to perfrom k8s ClusterPair operations
@@ -610,6 +616,20 @@ type ClusterDomainsOps interface {
 	ValidateClusterDomainUpdate(string, time.Duration, time.Duration) error
 	// ListClusterDomainUpdates lists ClusterDomainUpdates
 	ListClusterDomainUpdates() (*v1alpha1.ClusterDomainUpdateList, error)
+}
+
+// AutopilotRuleOps is an interface to perform k8s AutopilotRule operations
+type AutopilotRuleOps interface {
+	// CreateAutopilotRule creates the AutopilotRule object
+	CreateAutopilotRule(*aut_v1alpaha1.AutopilotRule) (*aut_v1alpaha1.AutopilotRule, error)
+	// GetAutopilotRule gets the AutopilotRule for the provided name
+	GetAutopilotRule(string) (*aut_v1alpaha1.AutopilotRule, error)
+	// UpdateAutopilotRule updates the AutopilotRule
+	UpdateAutopilotRule(*aut_v1alpaha1.AutopilotRule) (*aut_v1alpaha1.AutopilotRule, error)
+	// DeleteAutopilotRule deletes the AutopilotRule of the given name
+	DeleteAutopilotRule(string) error
+	// ListAutopilotRules lists AutopilotRules
+	ListAutopilotRules() (*aut_v1alpaha1.AutopilotRuleList, error)
 }
 
 // MigrationOps is an interface to perfrom k8s Migration operations
@@ -795,6 +815,7 @@ type k8sOps struct {
 	snapClient         rest.Interface
 	storkClient        storkclientset.Interface
 	talismanClient     talismanclientset.Interface
+	autopilotClient    autopilotclientset.Interface
 	apiExtensionClient apiextensionsclient.Interface
 	config             *rest.Config
 	dynamicInterface   dynamic.Interface
@@ -836,6 +857,7 @@ func (k *k8sOps) SetClient(
 	dynamicInterface dynamic.Interface,
 	ocpClient ocp_clientset.Interface,
 	ocpSecurityClient ocp_security_clientset.Interface,
+	autopilotClient autopilotclientset.Interface,
 ) {
 
 	k.client = client
@@ -845,6 +867,7 @@ func (k *k8sOps) SetClient(
 	k.dynamicInterface = dynamicInterface
 	k.ocpClient = ocpClient
 	k.ocpSecurityClient = ocpSecurityClient
+	k.autopilotClient = autopilotClient
 }
 
 // Initialize the k8s client if uninitialized
@@ -907,12 +930,14 @@ func (k *k8sOps) UpdateSecurityContextConstraints(securityContextConstraints *oc
 
 // Namespace APIs - BEGIN
 
-func (k *k8sOps) ListNamespaces() (*v1.NamespaceList, error) {
+func (k *k8sOps) ListNamespaces(labelSelector map[string]string) (*v1.NamespaceList, error) {
 	if err := k.initK8sClient(); err != nil {
 		return nil, err
 	}
 
-	return k.client.CoreV1().Namespaces().List(meta_v1.ListOptions{})
+	return k.client.CoreV1().Namespaces().List(meta_v1.ListOptions{
+		LabelSelector: mapToCSV(labelSelector),
+	})
 }
 
 func (k *k8sOps) GetNamespace(name string) (*v1.Namespace, error) {
@@ -4266,12 +4291,12 @@ func (k *k8sOps) CreateCRD(resource CustomResource) error {
 	return nil
 }
 
-func (k *k8sOps) RegisterCRD(crdDefinition *apiextensionsv1beta1.CustomResourceDefinition) error {
+func (k *k8sOps) RegisterCRD(crd *apiextensionsv1beta1.CustomResourceDefinition) error {
 	if err := k.initK8sClient(); err != nil {
 		return err
 	}
 
-	_, err := k.apiExtensionClient.ApiextensionsV1beta1().CustomResourceDefinitions().Create(crdDefinition)
+	_, err := k.apiExtensionClient.ApiextensionsV1beta1().CustomResourceDefinitions().Create(crd)
 	if err != nil {
 		return err
 	}
@@ -4303,6 +4328,16 @@ func (k *k8sOps) ValidateCRD(resource CustomResource, timeout, retryInterval tim
 		}
 		return false, nil
 	})
+}
+
+func (k *k8sOps) DeleteCRD(fullName string) error {
+	if err := k.initK8sClient(); err != nil {
+		return err
+	}
+
+	return k.apiExtensionClient.ApiextensionsV1beta1().
+		CustomResourceDefinitions().
+		Delete(fullName, &meta_v1.DeleteOptions{PropagationPolicy: &deleteForegroundPolicy})
 }
 
 func (k *k8sOps) CreateVolumePlacementStrategy(spec *talisman_v1beta2.VolumePlacementStrategy) (*talisman_v1beta2.VolumePlacementStrategy, error) {
@@ -4513,6 +4548,50 @@ func (k *k8sOps) ListClusterDomainUpdates() (*v1alpha1.ClusterDomainUpdateList, 
 }
 
 // ClusterDomain CRD - END
+
+// AutopilotRule CRD - BEGIN
+
+// CreateAutopilotRule creates the AutopilotRule object
+func (k *k8sOps) CreateAutopilotRule(rule *aut_v1alpaha1.AutopilotRule) (*aut_v1alpaha1.AutopilotRule, error) {
+	if err := k.initK8sClient(); err != nil {
+		return nil, err
+	}
+	return k.autopilotClient.AutopilotV1alpha1().AutopilotRules().Create(rule)
+}
+
+// GetAutopilotRule gets the AutopilotRule for the provided name
+func (k *k8sOps) GetAutopilotRule(name string) (*aut_v1alpaha1.AutopilotRule, error) {
+	if err := k.initK8sClient(); err != nil {
+		return nil, err
+	}
+	return k.autopilotClient.AutopilotV1alpha1().AutopilotRules().Get(name, meta_v1.GetOptions{})
+}
+
+// UpdateAutopilotRule updates the AutopilotRule
+func (k *k8sOps) UpdateAutopilotRule(rule *aut_v1alpaha1.AutopilotRule) (*aut_v1alpaha1.AutopilotRule, error) {
+	if err := k.initK8sClient(); err != nil {
+		return nil, err
+	}
+	return k.autopilotClient.AutopilotV1alpha1().AutopilotRules().Update(rule)
+}
+
+// DeleteAutopilotRule deletes the AutopilotRule of the given name
+func (k *k8sOps) DeleteAutopilotRule(name string) error {
+	if err := k.initK8sClient(); err != nil {
+		return err
+	}
+	return k.autopilotClient.AutopilotV1alpha1().AutopilotRules().Delete(name, &meta_v1.DeleteOptions{})
+}
+
+// ListAutopilotRules lists AutopilotRules
+func (k *k8sOps) ListAutopilotRules() (*aut_v1alpaha1.AutopilotRuleList, error) {
+	if err := k.initK8sClient(); err != nil {
+		return nil, err
+	}
+	return k.autopilotClient.AutopilotV1alpha1().AutopilotRules().List(meta_v1.ListOptions{})
+}
+
+// AutopilotRule CRD - END
 
 // Object APIs - BEGIN
 

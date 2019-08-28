@@ -353,6 +353,20 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:f9a845a9559305c56b201a2165657b4b855e9844a73548a129916627eb98e06b"
+  name = "github.com/libopenstorage/autopilot"
+  packages = [
+    "pkg/apis/autopilot",
+    "pkg/apis/autopilot/v1alpha1",
+    "pkg/client/clientset/versioned",
+    "pkg/client/clientset/versioned/scheme",
+    "pkg/client/clientset/versioned/typed/autopilot/v1alpha1",
+  ]
+  pruneopts = "UT"
+  revision = "cf9877b049701b3b509c4cc17bc207efb03374ad"
+
+[[projects]]
+  branch = "master"
   digest = "1:51b509e0dbef1a6a3ae7f1507a8f9d9e9fee4ae363ed07861b685d13d1c4327c"
   name = "github.com/libopenstorage/cloudops"
   packages = [
@@ -596,15 +610,15 @@
   revision = "e2f1ab4961e1124b8231b4b048df4d278e00ba82"
 
 [[projects]]
-  branch = "external_storage_dep"
-  digest = "1:37bc6eca8cd566f771a059f545a7a174f3ec22a79146ee4fc2fc4ee94f0932f9"
+  branch = "master"
+  digest = "1:a1e5f3fc4c05544f28a04cb41636369dc0158cdebef0cb57da37d017e57c7001"
   name = "github.com/portworx/sched-ops"
   packages = [
     "k8s",
     "task",
   ]
   pruneopts = "UT"
-  revision = "8be6c5a55f5f202abf17651efba5febd57c30d0f"
+  revision = "57cb26456f1e250822ee53a0445d718a0074feb1"
 
 [[projects]]
   branch = "master"
