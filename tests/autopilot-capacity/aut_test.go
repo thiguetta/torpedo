@@ -2,17 +2,21 @@ package tests
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
-	// "github.com/portworx/torpedo/drivers/node"
 	"github.com/portworx/torpedo/drivers/scheduler"
-	// "github.com/portworx/torpedo/drivers/volume"
 	. "github.com/portworx/torpedo/tests"
-	// "github.com/sirupsen/logrus"
+)
+
+var (
+	testName      = "AutopilotVolumeResize"
+	timeout       = 30 * time.Minute
+	retryInterval = 30 * time.Second
 )
 
 func TestAutoPilot(t *testing.T) {
@@ -30,19 +34,59 @@ var _ = BeforeSuite(func() {
 
 // This test performs basic test of starting an application, fills up the volume with data
 // which is more than the size of volume and waits that volume should be resized.
-var _ = Describe("{FillUpVolumeAndResize}", func() {
+var _ = Describe(fmt.Sprintf("{%s}", testName), func() {
 	It("has to fill up the volume completely, resize the volume, validate and teardown apps", func() {
 		var contexts []*scheduler.Context
-		for i := 0; i < Inst().ScaleFactor; i++ {
-			contexts = append(contexts, ScheduleAndValidate(fmt.Sprintf("fillupvolumeandresize-%d", i))...)
+		var err error
+
+		apParameters := &scheduler.AutopilotParameters{
+			Enable: true,
+			Name:   strings.ToLower(testName),
+			AutopilotRuleParameters: scheduler.AutopilotRuleParameters{
+				ActionsCoolDownPeriod: 60,
+				PVCWorkloadSize:       10737418240, //10Gb
+				PVCPercentageUsage:    50,
+				PVCPercentageScale:    50,
+			},
 		}
-		Step("Giving some minutes for volume to be fill up", func() {
-			time.Sleep(25 * time.Minute)
+		for i := 0; i < Inst().ScaleFactor; i++ {
+			Step("schedule applications", func() {
+				taskName := fmt.Sprintf("%s-%v", fmt.Sprintf("%s-%d", strings.ToLower(testName), i), Inst().InstanceID)
+				contexts, err = Inst().S.Schedule(taskName, scheduler.ScheduleOptions{
+					AppKeys:             Inst().AppList,
+					StorageProvisioner:  Inst().Provisioner,
+					AutopilotParameters: apParameters,
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(contexts).NotTo(BeEmpty())
+			})
+		}
+
+		for _, ctx := range contexts {
+			Step("wait until workload completes on volume", func() {
+				err = Inst().S.WaitForRunning(ctx, timeout, retryInterval)
+				Expect(err).NotTo(HaveOccurred())
+			})
+		}
+
+		for _, ctx := range contexts {
+			Step("validating volumes and verifying size of volumes", func() {
+				err = Inst().S.InspectVolumes(ctx, timeout, retryInterval)
+				Expect(err).NotTo(HaveOccurred())
+			})
+		}
+
+		Step("wait for unscheduled resize of volume", func() {
+			time.Sleep(10 * time.Minute)
 		})
 
-		opts := make(map[string]bool)
-		opts[scheduler.OptionsWaitForResourceLeakCleanup] = true
-		ValidateAndDestroy(contexts, opts)
+		for _, ctx := range contexts {
+			Step("validating volumes and verifying size of volumes", func() {
+				err = Inst().S.InspectVolumes(ctx, timeout, retryInterval)
+				Expect(err).NotTo(HaveOccurred())
+			})
+		}
+
 	})
 })
 

@@ -345,25 +345,25 @@
   name = "github.com/kubernetes-incubator/external-storage"
   packages = [
     "snapshot/pkg/apis/crd/v1",
-    "snapshot/pkg/client",
+    "snapshot/pkg/client"
   ]
   pruneopts = "UT"
   revision = "18c097ccef789822b480acd686afa5d8c859484f"
   source = "github.com/libopenstorage/external-storage"
 
 [[projects]]
-  branch = "master"
-  digest = "1:f9a845a9559305c56b201a2165657b4b855e9844a73548a129916627eb98e06b"
+  digest = "1:4b459bbf1199adbbe060fa0f5aee5223c19da8f5881357dc9b3e560d0cedc6e5"
   name = "github.com/libopenstorage/autopilot"
   packages = [
     "pkg/apis/autopilot",
     "pkg/apis/autopilot/v1alpha1",
     "pkg/client/clientset/versioned",
     "pkg/client/clientset/versioned/scheme",
-    "pkg/client/clientset/versioned/typed/autopilot/v1alpha1",
+    "pkg/client/clientset/versioned/typed/autopilot/v1alpha1"
   ]
   pruneopts = "UT"
-  revision = "cf9877b049701b3b509c4cc17bc207efb03374ad"
+  revision = "b729432d86a6629bf4567bcbebc2b7708852986a"
+  version = "v0.1.0"
 
 [[projects]]
   branch = "master"
@@ -604,21 +604,21 @@
   packages = [
     ".",
     "common",
-    "mem",
+    "mem"
   ]
   pruneopts = "UT"
   revision = "e2f1ab4961e1124b8231b4b048df4d278e00ba82"
 
 [[projects]]
   branch = "master"
-  digest = "1:a1e5f3fc4c05544f28a04cb41636369dc0158cdebef0cb57da37d017e57c7001"
+  digest = "1:6d09219d43bcaf86645aed025e2402f814a2b6e7f68d1a6fc01397c64db1f702"
   name = "github.com/portworx/sched-ops"
   packages = [
     "k8s",
-    "task",
+    "task"
   ]
   pruneopts = "UT"
-  revision = "57cb26456f1e250822ee53a0445d718a0074feb1"
+  revision = "3e49230b97293dad824a65a9d1f12e4c2f18d1da"
 
 [[projects]]
   branch = "master"
@@ -1093,6 +1093,7 @@
     "github.com/fatih/color",
     "github.com/gambol99/go-marathon",
     "github.com/kubernetes-incubator/external-storage/snapshot/pkg/apis/crd/v1",
+    "github.com/libopenstorage/autopilot/pkg/apis/autopilot/v1alpha1",
     "github.com/libopenstorage/cloudops",
     "github.com/libopenstorage/cloudops/gce",
     "github.com/libopenstorage/openstorage/api",

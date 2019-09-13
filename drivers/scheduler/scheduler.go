@@ -20,8 +20,9 @@ const (
 
 // Context holds the execution context of a test task.
 type Context struct {
-	UID string
-	App *spec.AppSpec
+	UID     string
+	App     *spec.AppSpec
+	Options ScheduleOptions
 }
 
 // DeepCopy create a copy of Context
@@ -41,6 +42,26 @@ func (in *Context) GetID() string {
 	return in.App.GetID(in.UID)
 }
 
+// AutopilotRuleParameters are rule parameters for Autopilot
+type AutopilotRuleParameters struct {
+	ActionsCoolDownPeriod int64
+	MatchLabels           map[string]string
+	PVCSize               int64
+	PVCWorkloadSize       int64
+	PVCPercentageUsage    int64
+	PVCPercentageScale    int64
+	PVCMaximumSize        int64
+}
+
+// AutopilotParameters are parameters that using for Autopilot
+type AutopilotParameters struct {
+	Enable                  bool
+	Name                    string
+	Namespace               string
+	PollInterval            int64
+	AutopilotRuleParameters AutopilotRuleParameters
+}
+
 // ScheduleOptions are options that callers to pass to influence the apps that get schduled
 type ScheduleOptions struct {
 	// AppKeys identified a list of applications keys that users wants to schedule (Optional)
@@ -49,6 +70,8 @@ type ScheduleOptions struct {
 	Nodes []node.Node
 	// StorageProvisioner identifies what storage provider should be used
 	StorageProvisioner string
+	// AtopilotParameters identifies options for autopilot (Optional)
+	AutopilotParameters *AutopilotParameters
 }
 
 // Driver must be implemented to provide test support to various schedulers.

@@ -10,6 +10,8 @@ type LabelSelectorOperator string
 const (
 	// AutopilotRuleResourceName is the name of the singular AutopilotRule objects
 	AutopilotRuleResourceName = "autopilotrule"
+	// AutopilotRuleResourceShortName is the short name for AutopilotRule objects
+	AutopilotRuleResourceShortName = "ar"
 
 	// AutopilotRuleResourcePlural is the name of the plural AutopilotRule objects
 	AutopilotRuleResourcePlural = "autopilotrules"
@@ -81,7 +83,7 @@ type AutopilotRuleSpec struct {
 	Weight int64 `json:"weight,omitempty"`
 	// PollInterval defined the interval in seconds at which the conditions for the
 	// rule are queried from the metrics provider
-	PollInterval int64 `json:"weight,omitempty"`
+	PollInterval int64 `json:"pollInterval,omitempty"`
 	// Enforcement specifies the enforcement type for rule. Can take values: required or preferred.
 	// (optional)
 	Enforcement EnforcementType `json:"enforcement,omitempty"`
@@ -93,6 +95,9 @@ type AutopilotRuleSpec struct {
 	Conditions RuleConditions `json:"conditions"`
 	// Actions are the actions to run for the rule when the conditions are met
 	Actions []*RuleAction `json:"actions"`
+	// ActionsCoolDownPeriod is the duration in seconds for which autopilot will not
+	// re-trigger any actions once they have been executed.
+	ActionsCoolDownPeriod int64 `json:"actionsCoolDownPeriod,omitempty"`
 }
 
 // RuleObjectSelector defines an object for the rule

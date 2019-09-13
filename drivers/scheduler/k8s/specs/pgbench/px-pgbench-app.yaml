@@ -46,7 +46,13 @@ spec:
             - name: PG_USER
               value: pgbench
             - name: SIZE
-              value: "24"
+              value: "10"
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "cat /pgbench/pgbench_state.file"]
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
           volumeMounts:
           - mountPath: /var/lib/postgresql/data
             name: pgbenchdb
