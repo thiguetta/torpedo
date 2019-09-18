@@ -49,6 +49,8 @@ type ScheduleOptions struct {
 	Nodes []node.Node
 	// StorageProvisioner identifies what storage provider should be used
 	StorageProvisioner string
+	// ConfigMap  identifies what config map should be used to
+	ConfigMap string
 }
 
 // Driver must be implemented to provide test support to various schedulers.
@@ -76,11 +78,14 @@ type Driver interface {
 	// AddTasks adds tasks to an existing context
 	AddTasks(*Context, ScheduleOptions) error
 
+	// UpdateTasksID updates task IDs in the given context
+	UpdateTasksID(*Context, string) error
+
 	// Destroy removes a application. It does not delete the volumes of the task.
 	Destroy(*Context, map[string]bool) error
 
 	// WaitForDestroy waits for application to destroy.
-	WaitForDestroy(*Context) error
+	WaitForDestroy(*Context, time.Duration) error
 
 	// DeleteTasks deletes all tasks of the application (not the applicaton)
 	DeleteTasks(*Context) error
@@ -124,11 +129,24 @@ type Driver interface {
 	// RescanSpecs specified in specDir
 	RescanSpecs(specDir string) error
 
+	// EnableSchedulingOnNode enable apps to be scheduled to a given node
+	EnableSchedulingOnNode(n node.Node) error
+
+	// DisableSchedulingOnNode disable apps to be scheduled to a given node
+	DisableSchedulingOnNode(n node.Node) error
+
 	// PrepareNodeToDecommission prepares a given node for decommissioning
 	PrepareNodeToDecommission(n node.Node, provisioner string) error
 
 	// IsScalable check if a given spec is scalable or not
 	IsScalable(spec interface{}) bool
+
+	// ValidateVolumeSnapshotRestore return nil if snapshot is restored successuflly to
+	// parent volumes
+	ValidateVolumeSnapshotRestore(*Context, time.Time) error
+
+	// Get token for a volume
+	GetTokenFromConfigMap(string) (string, error)
 }
 
 var (
