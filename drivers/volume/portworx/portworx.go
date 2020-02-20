@@ -1921,8 +1921,9 @@ func (d *portworx) getKvdbMembers(n node.Node) (map[string]metadataNode, error) 
 		return kvdbMembers, err
 	}
 	endpoint, err := d.schedOps.GetServiceEndpoint()
+	c, _ := client.NewClient(fmt.Sprintf("http://%s:%d", endpoint, pxdRestPort), "", "")
 	var url string
-	if err != nil {
+	if err != nil || c.Get().Do().Error() != nil {
 		logrus.Warnf("unable to get service endpoint falling back to node addr %v", err)
 		pxdRestPort, err = getRestContainerPort()
 		if err != nil {
@@ -1934,7 +1935,7 @@ func (d *portworx) getKvdbMembers(n node.Node) (map[string]metadataNode, error) 
 	}
 	// TODO replace by sdk call whenever it is available
 	logrus.Infof("Url to call %v", url)
-	c, err := client.NewClient(url, "", "")
+	c, err = client.NewClient(url, "", "")
 	if err != nil {
 		return nil, err
 	}
