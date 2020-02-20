@@ -482,9 +482,9 @@ func isDirEmpty(path string, n node.Node, d node.Driver) bool {
 }
 
 func (k *k8sSchedOps) GetServiceEndpoint() (string, error) {
-	svc, err := k8sCore.GetService(PXServiceName, PXNamespace)
+	svc, err := k8sCore.GetServiceEndpoint(PXServiceName, PXNamespace)
 	if err == nil {
-		return svc.Spec.ClusterIP, nil
+		return svc, nil
 	}
 	return "", err
 }
