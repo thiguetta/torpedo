@@ -18,7 +18,7 @@ func TestUpgrade(t *testing.T) {
 	RegisterFailHandler(Fail)
 
 	var specReporters []Reporter
-	junitReporter := reporters.NewJUnitReporter("/testresults/junit_Upgrade.xml")
+	junitReporter := reporters.NewJUnitReporter(fmt.Sprintf("%s/%s", Inst().TestResultsPath, "junit_Upgrade.xml"))
 	specReporters = append(specReporters, junitReporter)
 	RunSpecsWithDefaultAndCustomReporters(t, "Torpedo : Upgrade", specReporters)
 }

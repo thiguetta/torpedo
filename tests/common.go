@@ -54,7 +54,7 @@ const (
 	logLocationCliFlag                   = "log-location"
 	logLevelCliFlag                      = "log-level"
 	scaleFactorCliFlag                   = "scale-factor"
-	minRunTimeMinsFlag                   = "minimun-runtime-mins"
+	minRunTimeMinsFlag                   = "minimum-runtime-mins"
 	chaosLevelFlag                       = "chaos-level"
 	storageUpgradeEndpointURLCliFlag     = "storage-upgrade-endpoint-url"
 	storageUpgradeEndpointVersionCliFlag = "storage-upgrade-endpoint-version"
@@ -533,6 +533,7 @@ type Torpedo struct {
 	ConfigMap                           string
 	BundleLocation                      string
 	CustomAppConfig                     map[string]scheduler.AppConfig
+	TestResultsPath                     string
 }
 
 // ParseFlags parses command line flags
@@ -554,6 +555,7 @@ func ParseFlags() {
 	var bundleLocation string
 	var customConfigPath string
 	var customAppConfig map[string]scheduler.AppConfig
+	var testResultsPath string
 
 	flag.StringVar(&s, schedulerCliFlag, defaultScheduler, "Name of the scheduler to use")
 	flag.StringVar(&n, nodeDriverCliFlag, defaultNodeDriver, "Name of the node driver to use")
@@ -578,6 +580,7 @@ func ParseFlags() {
 	flag.StringVar(&configMapName, configMapFlag, "", "Name of the config map to be used.")
 	flag.StringVar(&bundleLocation, "bundle-location", defaultBundleLocation, "Path to support bundle output files")
 	flag.StringVar(&customConfigPath, "custom-config", "", "Path to custom configuration files")
+	flag.StringVar(&testResultsPath, "test-results-path", "/testresults", "Path to test results")
 
 	flag.Parse()
 
@@ -634,6 +637,7 @@ func ParseFlags() {
 				ConfigMap:                           configMapName,
 				BundleLocation:                      bundleLocation,
 				CustomAppConfig:                     customAppConfig,
+				TestResultsPath:                     testResultsPath,
 			}
 		})
 	}

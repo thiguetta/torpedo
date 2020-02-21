@@ -19,7 +19,7 @@ func TestStopScheduler(t *testing.T) {
 	RegisterFailHandler(Fail)
 
 	var specReporters []Reporter
-	junitReporter := reporters.NewJUnitReporter("/testresults/junit_StopScheduler.xml")
+	junitReporter := reporters.NewJUnitReporter(fmt.Sprintf("%s/%s", Inst().TestResultsPath, "junit_StopScheduler.xml"))
 	specReporters = append(specReporters, junitReporter)
 	RunSpecsWithDefaultAndCustomReporters(t, "Torpedo : StopScheduler", specReporters)
 }

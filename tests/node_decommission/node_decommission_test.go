@@ -26,9 +26,9 @@ func TestDecommissionNode(t *testing.T) {
 	RegisterFailHandler(Fail)
 
 	var specReporters []Reporter
-	junitReporter := reporters.NewJUnitReporter("/testresults/junit_DecommissionNode.xml")
+	junitReporter := reporters.NewJUnitReporter(fmt.Sprintf("%s/%s", Inst().TestResultsPath, "junit_DecommissionNode.xml"))
 	specReporters = append(specReporters, junitReporter)
-	RunSpecsWithDefaultAndCustomReporters(t, "Torpedo: DecommissionNode", specReporters)
+	RunSpecsWithDefaultAndCustomReporters(t, "Torpedo : DecommissionNode", specReporters)
 }
 
 var _ = BeforeSuite(func() {

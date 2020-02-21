@@ -29,7 +29,7 @@ func TestASG(t *testing.T) {
 	RegisterFailHandler(Fail)
 
 	var specReporters []Reporter
-	junitReporter := reporters.NewJUnitReporter("/testresults/junit_basic.xml")
+	junitReporter := reporters.NewJUnitReporter(fmt.Sprintf("%s/%s", Inst().TestResultsPath, "junit_basic.xml"))
 	specReporters = append(specReporters, junitReporter)
 	RunSpecsWithDefaultAndCustomReporters(t, "Torpedo : ASG", specReporters)
 }

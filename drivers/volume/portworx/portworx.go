@@ -1745,8 +1745,10 @@ func (d *portworx) maintenanceOp(n node.Node, op string) error {
 		return err
 	}
 	endpoint, err := d.schedOps.GetServiceEndpoint()
+	c, _ := client.NewClient(fmt.Sprintf("http://%s:%d", endpoint, pxdRestPort), "", "")
 	var url string
-	if err != nil {
+	// calling kvmembers just for checking if endpoint is responding since maintenance op is disruptive
+	if err != nil || c.Get().Resource("kvmembers").Do().Error() != nil {
 		logrus.Warnf("unable to get service endpoint falling back to node addr %v", err)
 		pxdRestPort, err = getRestContainerPort()
 		if err != nil {
@@ -1756,7 +1758,7 @@ func (d *portworx) maintenanceOp(n node.Node, op string) error {
 	} else {
 		url = fmt.Sprintf("http://%s:%d", endpoint, pxdRestPort)
 	}
-	c, err := client.NewClient(url, "", "")
+	c, err = client.NewClient(url, "", "")
 	if err != nil {
 		return err
 	}
@@ -1923,7 +1925,7 @@ func (d *portworx) getKvdbMembers(n node.Node) (map[string]metadataNode, error) 
 	endpoint, err := d.schedOps.GetServiceEndpoint()
 	c, _ := client.NewClient(fmt.Sprintf("http://%s:%d", endpoint, pxdRestPort), "", "")
 	var url string
-	if err != nil || c.Get().Do().Error() != nil {
+	if err != nil || c.Get().Resource("kvmembers").Do().Error() != nil {
 		logrus.Warnf("unable to get service endpoint falling back to node addr %v", err)
 		pxdRestPort, err = getRestContainerPort()
 		if err != nil {

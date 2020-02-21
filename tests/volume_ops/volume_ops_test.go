@@ -20,7 +20,7 @@ func TestVolOps(t *testing.T) {
 	RegisterFailHandler(Fail)
 
 	var specReporters []Reporter
-	junitReporter := reporters.NewJUnitReporter("/testresults/junit_VolOps.xml")
+	junitReporter := reporters.NewJUnitReporter(fmt.Sprintf("%s/%s", Inst().TestResultsPath, "junit_VolOps.xml"))
 	specReporters = append(specReporters, junitReporter)
 	RunSpecsWithDefaultAndCustomReporters(t, "Torpedo : VolOps", specReporters)
 }
