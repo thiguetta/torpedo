@@ -143,9 +143,9 @@ func init() {
 	runCmd.Flags().StringVarP(&testSuite, "test-suite", "", "", "")
 
 	// test specific parameters
-	runCmd.Flags().StringVarP(&specDir, "--spec-dir", "", "../drivers/scheduler/k8s/specs", "")
+	runCmd.Flags().StringVarP(&specDir, "spec-dir", "", "../drivers/scheduler/k8s/specs", "")
 	runCmd.Flags().StringVarP(&logLocation, "log-location", "", "/mnt/torpedo_support_dir", "")
-	runCmd.Flags().StringVarP(&testResultsPath, "test-results-path", "", "", "/testresults")
+	runCmd.Flags().StringVarP(&testResultsPath, "test-results-path", "", "/testresults", "")
 	runCmd.Flags().StringVarP(&appList, "app-list", "", "", "")
 	runCmd.Flags().IntVarP(&scaleFactor, "scale-factor", "s", 1, "")
 	runCmd.Flags().StringVarP(&scheduler, "scheduler", "S", "k8s", "")

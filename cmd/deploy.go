@@ -48,16 +48,17 @@ to quickly create a Cobra application.`,
 
 			out, err = exec.Command("kubectl", "create", "namespace", "chaos-testing").Output()
 			if err != nil {
-				fmt.Println(err)
+				fmt.Printf("%s %v\n", string(out), err)
 				os.Exit(1)
 			}
 			fmt.Println(string(out))
 
-			out, err = exec.Command("helm", "install", "chaos-mesh", "chaos-mesh", "--namespace=chaos-testing").Output()
+			out, err = exec.Command("helm", "install", "chaos-mesh", "--name=chaos-mesh", "--namespace=chaos-testing").CombinedOutput()
 			if err != nil {
-				fmt.Println(err)
+				fmt.Printf("%s %v\n", string(out), err)
 				os.Exit(1)
 			}
+
 			fmt.Println(string(out))
 			dep := &appsv1.Deployment{}
 			dep.Name = "chaos-controller-manager"
@@ -72,7 +73,7 @@ to quickly create a Cobra application.`,
 			}
 			out, err = exec.Command("kubectl", "apply", "-f", "../drivers/scheduler/k8s/specs/chaos/").Output()
 			if err != nil {
-				fmt.Println(err)
+				fmt.Printf("%s %v\n", string(out), err)
 				os.Exit(1)
 			}
 		}
@@ -266,6 +267,7 @@ func createTorpedo() {
 
 	pod := corev1.Pod{}
 	pod.Name = "torpedo"
+	pod.Namespace = "default"
 	pod.Labels = map[string]string{
 		"app": "torpedo",
 	}
@@ -287,13 +289,15 @@ func createTorpedo() {
 				Image:           torpedoImg,
 				ImagePullPolicy: "Always",
 				TTY:             true,
-				Command:         []string{"run"},
-				Args: []string{
+				//Command:         []string{"run"},
+				Args: []string{"run",
+					fmt.Sprintf("--verbose=%t", verbose),
+					fmt.Sprintf("--dry-run=%t", dryRun),
 					fmt.Sprintf("--fail-fast=%t", failFast),
 					"--skip-tests", skipTests,
 					"--focus-tests", focusTests,
 					"--test-suite", testSuite,
-					"timeout", timeout.String(),
+					"--timeout", timeout.String(),
 					"--spec-dir", "../drivers/scheduler/k8s/specs",
 					"--app-list", appList,
 					"--scheduler", scheduler,
@@ -325,7 +329,9 @@ func createTorpedo() {
 	core.Instance().CreateServiceAccount(&serviceAccount)
 	rbac.Instance().CreateClusterRole(&clusterRole)
 	rbac.Instance().CreateClusterRoleBinding(&clusterRoleBinding)
-	core.Instance().CreatePod(&pod)
+	if _, err := core.Instance().CreatePod(&pod); err != nil {
+		fmt.Println(err)
+	}
 
 	if !detach {
 		t := func() (interface{}, bool, error) {
@@ -357,7 +363,16 @@ func createTorpedo() {
 
 func init() {
 	rootCmd.AddCommand(deployCmd)
+	// ginkgo parameters
+	deployCmd.Flags().DurationVarP(&timeout, "timeout", "", 720*time.Hour, "")
+	deployCmd.Flags().BoolVarP(&dryRun, "dry-run", "", false, "")
 	deployCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "")
+	deployCmd.Flags().BoolVarP(&failFast, "fail-fast", "", false, "")
+	deployCmd.Flags().StringVarP(&skipTests, "skip-tests", "", "", "")
+	deployCmd.Flags().StringVarP(&focusTests, "focus-tests", "", "", "")
+	deployCmd.Flags().StringVarP(&testSuite, "test-suite", "", "", "")
+
+	// test parameters
 	deployCmd.Flags().IntVarP(&scaleFactor, "scale-factor", "s", 10, "")
 	deployCmd.Flags().StringVarP(&scheduler, "scheduler", "S", "k8s", "")
 	deployCmd.Flags().StringVarP(&loglevel, "log-level", "L", "debug", "")

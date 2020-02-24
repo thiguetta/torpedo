@@ -24,11 +24,12 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if err := core.Instance().DeleteNamespace("chaos-testing"); err != nil {
+		if err := core.Instance().DeleteNamespace("chaos-testing"); err != nil && !strings.Contains(err.Error(), "not found") {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		exec.Command("kubectl", "apply", "-f", "manifests/").Output()
+		exec.Command("helm", "del", "--purge chaos-mesh").Output()
+		exec.Command("kubectl", "delete", "-f", "manifests/").Output()
 
 		namespaces, err := core.Instance().ListNamespaces(map[string]string{"creator": "torpedo"})
 		if err != nil {
@@ -69,6 +70,7 @@ to quickly create a Cobra application.`,
 				}
 			}
 		}
+		core.Instance().DeletePod("torpedo", "default", false)
 	},
 }
 
