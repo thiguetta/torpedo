@@ -25,6 +25,12 @@ var k8sOpenShift = opnshift.Instance()
 
 func (k *openshift) StopSchedOnNode(n node.Node) error {
 	driver, _ := node.Get(k.K8s.NodeDriverName)
+
+	usableServiceName := SystemdSchedServiceName
+	if serviceName, err := k.getServiceName(driver, n); err != nil {
+		usableServiceName = serviceName
+	}
+
 	systemOpts := node.SystemctlOpts{
 		ConnectionOpts: node.ConnectionOpts{
 			Timeout:         kube.FindFilesOnWorkerTimeout,
@@ -32,11 +38,11 @@ func (k *openshift) StopSchedOnNode(n node.Node) error {
 		},
 		Action: "stop",
 	}
-	err := driver.Systemctl(n, SystemdSchedServiceName, systemOpts)
+	err := driver.Systemctl(n, usableServiceName, systemOpts)
 	if err != nil {
 		return &scheduler.ErrFailedToStopSchedOnNode{
 			Node:          n,
-			SystemService: SystemdSchedServiceName,
+			SystemService: usableServiceName,
 			Cause:         err.Error(),
 		}
 	}
@@ -62,6 +68,12 @@ func (k *openshift) getServiceName(driver node.Driver, n node.Node) (string, err
 
 func (k *openshift) StartSchedOnNode(n node.Node) error {
 	driver, _ := node.Get(k.K8s.NodeDriverName)
+
+	usableServiceName := SystemdSchedServiceName
+	if serviceName, err := k.getServiceName(driver, n); err != nil {
+		usableServiceName = serviceName
+	}
+
 	systemOpts := node.SystemctlOpts{
 		ConnectionOpts: node.ConnectionOpts{
 			Timeout:         kube.DefaultTimeout,
@@ -69,11 +81,11 @@ func (k *openshift) StartSchedOnNode(n node.Node) error {
 		},
 		Action: "start",
 	}
-	err := driver.Systemctl(n, SystemdSchedServiceName, systemOpts)
+	err := driver.Systemctl(n, usableServiceName, systemOpts)
 	if err != nil {
 		return &scheduler.ErrFailedToStartSchedOnNode{
 			Node:          n,
-			SystemService: SystemdSchedServiceName,
+			SystemService: usableServiceName,
 			Cause:         err.Error(),
 		}
 	}
