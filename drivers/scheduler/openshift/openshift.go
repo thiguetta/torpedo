@@ -43,6 +43,23 @@ func (k *openshift) StopSchedOnNode(n node.Node) error {
 	return nil
 }
 
+func (k *openshift) getServiceName(driver node.Driver, n node.Node) (string, error) {
+	systemOpts := node.SystemctlOpts{
+		ConnectionOpts: node.ConnectionOpts{
+			Timeout:         kube.DefaultTimeout,
+			TimeBeforeRetry: kube.DefaultRetryInterval,
+		},
+	}
+	serviceName := SystemdSchedServiceName
+	// if the service doesn't exist fallback to kubelet.service
+	if ok, err := driver.SystemctlUnitExist(n, serviceName, systemOpts); !ok && err != nil {
+		return "", err
+	} else if !ok {
+		serviceName = kube.SystemdSchedServiceName
+	}
+	return serviceName, nil
+}
+
 func (k *openshift) StartSchedOnNode(n node.Node) error {
 	driver, _ := node.Get(k.K8s.NodeDriverName)
 	systemOpts := node.SystemctlOpts{
@@ -109,7 +126,13 @@ func (k *openshift) Schedule(instanceID string, options scheduler.ScheduleOption
 
 func (k *openshift) SaveSchedulerLogsToFile(n node.Node, location string) error {
 	driver, _ := node.Get(k.K8s.NodeDriverName)
-	cmd := fmt.Sprintf("journalctl -lu %s* > %s/kubelet.log", SystemdSchedServiceName, location)
+
+	usableServiceName := SystemdSchedServiceName
+	if serviceName, err := k.getServiceName(driver, n); err != nil {
+		usableServiceName = serviceName
+	}
+
+	cmd := fmt.Sprintf("journalctl -lu %s* > %s/kubelet.log", usableServiceName, location)
 	_, err := driver.RunCommand(n, cmd, node.ConnectionOpts{
 		Timeout:         kube.DefaultTimeout,
 		TimeBeforeRetry: kube.DefaultRetryInterval,
